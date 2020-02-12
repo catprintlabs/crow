@@ -8,16 +8,16 @@ module Crow
       end
 
       code = <<-JS
-      if (#{cond}) {#{format_body(node.then)}}
+      if (#{cond}) { return (#{format_body(node.then)})}
       JS
       case node.else
       when Crystal::Nop
       when Crystal::If
         code += " else #{transpile(node.else)}"
       else
-        code += " else {#{format_body(node.else)}}"
+        code += " else { return (#{format_body(node.else)})}"
       end
-      code
+      "(function () { #{code} })()"
     end
 
     private def transpile(node : Crystal::Unless)
@@ -25,14 +25,14 @@ module Crow
       cond = "!#{cond}"
 
       code = <<-JS
-      if (#{cond}) {#{format_body(node.then)}}
+      if (#{cond}) { return (#{format_body(node.then)})}
       JS
       case node.else
       when Crystal::Nop
       else
-        code += " else {#{format_body(node.else)}}"
+        code += " else {return (#{format_body(node.else)})}"
       end
-      code
+      "(function () { #{code} })()"
     end
 
     private def transpile(node : Crystal::Case)
@@ -45,7 +45,7 @@ module Crow
         end.join("")
         code += transpile_to_default(node.else)
 
-        "switch (#{transpile(node_cond)}) {\n#{code}}"
+        "switch (#{transpile(node_cond)}) {return \n#{code}}"
       else
         raise "Case statements without conditions cannot be transpiled. \
                See https://github.com/geppetto-apps/crow/issues/8/"

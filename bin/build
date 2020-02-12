@@ -3,7 +3,7 @@ set -e
 
 mkdir -p build
 
-crystal deps
+shards
 crystal build -obuild/crow --release src/cli.cr
 
 cp -f build/crow npm/crow
